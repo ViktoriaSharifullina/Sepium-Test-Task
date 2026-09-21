@@ -16,8 +16,29 @@
         var propertyMas = {};
 
         $('.name_select_rielt').each(function () {
-            var propertyId = $(this).attr('data-property');
-            var value = $(this).find('input.ag_pole_good, select.ag_pole_good').first().val();
+            var $field = $(this);
+            var propertyId = $field.attr('data-property');
+            var $input = $field.find('input.ag_pole_good').first();
+            var $select = $field.find('select.ag_pole_good').first();
+            var value;
+
+            if ($select.length) {
+                value = $select.val();
+            } else if ($input.length) {
+                value = $input.val();
+            } else {
+                var checked = [];
+
+                $field.find('input[type="checkbox"]:checked').each(function () {
+                    var checkboxValue = $(this).siblings('.ckeck_param').attr('data-val');
+
+                    if (checkboxValue !== undefined && checkboxValue !== '') {
+                        checked[checked.length] = checkboxValue;
+                    }
+                });
+
+                value = checked.join(':::');
+            }
 
             if (value !== undefined && value !== '') {
                 propertyMas[propertyId] = value;

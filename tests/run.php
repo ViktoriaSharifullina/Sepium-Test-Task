@@ -37,6 +37,81 @@ function requestPage($path, $body)
     );
 }
 
+function requestProperties($categories)
+{
+    return requestPage(
+        '/admin/ajax/property/Refresh_Property_Good.php',
+        http_build_query(array('category' => $categories))
+    );
+}
+
+function hasProperty($html, $propertyId)
+{
+    return strpos($html, 'data-property="' . $propertyId . '"') !== false;
+}
+
+function testAjaxContract()
+{
+    $response = requestProperties(array(1));
+    check(
+        strpos($response, 'property-field') !== false
+            && strpos(ltrim($response), '{') !== 0,
+        'AJAX-обработчик сохраняет контракт с готовым HTML-ответом.'
+    );
+}
+
+function testEmptyCategory()
+{
+    $response = requestProperties(array());
+    check(
+        hasProperty($response, 1)
+            && hasProperty($response, 6)
+            && !hasProperty($response, 2)
+            && !hasProperty($response, 3)
+            && !hasProperty($response, 4)
+            && !hasProperty($response, 5)
+            && !hasProperty($response, 7),
+        'Без категории возвращаются только общие характеристики.'
+    );
+}
+
+function testFurnitureCategory()
+{
+    $response = requestProperties(array(1));
+    check(
+        hasProperty($response, 1)
+            && hasProperty($response, 2)
+            && hasProperty($response, 3)
+            && hasProperty($response, 4)
+            && hasProperty($response, 6)
+            && !hasProperty($response, 5)
+            && !hasProperty($response, 7)
+            && strpos($response, 'inputmode="decimal"') !== false,
+        'Для категории Мебель возвращаются общие, связанные и числовые характеристики.'
+    );
+}
+
+function testMultipleCategories()
+{
+    $response = requestProperties(array(1, 2));
+    check(
+        substr_count($response, 'data-property="3"') === 1,
+        'Характеристика, общая для нескольких категорий, не дублируется.'
+    );
+}
+
+function testInvalidCategory()
+{
+    $response = requestProperties(array('1 OR 1=1', array('11')));
+    check(
+        hasProperty($response, 1)
+            && hasProperty($response, 6)
+            && !hasProperty($response, 2)
+            && strpos($response, '&lt;текст&gt;') !== false,
+        'Некорректные категории игнорируются, а текст из БД экранируется.'
+    );
+}
+
 try {
     $tables = db()->query("SHOW TABLES LIKE 'property_s'")->fetchAll();
     $categories = db()->query('SELECT ID_category FROM category_s')->fetchAll();
@@ -46,15 +121,11 @@ try {
         'Legacy-fixture доступен и использует таблицы админки.'
     );
 
-    $baselineResponse = requestPage(
-        '/admin/ajax/property/Refresh_Property_Good.php',
-        http_build_query(array('category' => array(1)))
-    );
-    check(
-        strpos($baselineResponse, 'property-field') !== false
-            && strpos(ltrim($baselineResponse), '{') !== 0,
-        'AJAX-обработчик сохраняет контракт с готовым HTML-ответом.'
-    );
+    testAjaxContract();
+    testEmptyCategory();
+    testFurnitureCategory();
+    testMultipleCategories();
+    testInvalidCategory();
 } catch (Exception $exception) {
     $failed++;
     echo '[FAIL] Проверки прерваны исключением: ' . $exception->getMessage() . PHP_EOL;
