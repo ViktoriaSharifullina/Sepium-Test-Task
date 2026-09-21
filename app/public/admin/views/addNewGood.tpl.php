@@ -5,17 +5,17 @@ function property($property)
 {
     $place = '';
     if ($property['place_prop'] != '') {
-        $place = '<div class="field-help">' . $property['place_prop'] . '</div>';
+        $place = '<div class="field-help">' . h($property['place_prop']) . '</div>';
     }
 
-    $idProp = $property['id'];
+    $idProp = (int) $property['id'];
     $allOption = '';
 
     if ($property['type_prop'] == '1') {
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . h($property['name_prop']) . '</div>
             ' . $place . '
-            <input type="text" class="text-input add-inp ag_pole_good" placeholder="' . $property['name_prop'] . '">
+            <input type="text" class="text-input add-inp ag_pole_good" placeholder="' . h($property['name_prop']) . '">
         </div>';
     } elseif ($property['type_prop'] == '2') {
         $answers = db()->query(
@@ -23,11 +23,11 @@ function property($property)
         );
 
         while ($answer = $answers->fetch()) {
-            $allOption .= '<option value="' . $answer['id'] . '">' . $answer['answer_prop'] . '</option>';
+            $allOption .= '<option value="' . (int) $answer['id'] . '">' . h($answer['answer_prop']) . '</option>';
         }
 
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . h($property['name_prop']) . '</div>
             ' . $place . '
             <select class="text-input ag_pole_good">
                 <option value="">Не выбрано</option>' . $allOption . '
@@ -42,18 +42,18 @@ function property($property)
         while ($answer = $answers->fetch()) {
             $checkboxes .= '<label class="choice line_chek">
                 <input type="checkbox">
-                <span class="ckeck_param" data-val="' . $answer['id'] . '">' . $answer['answer_prop'] . '</span>
+                <span class="ckeck_param" data-val="' . (int) $answer['id'] . '">' . h($answer['answer_prop']) . '</span>
             </label>';
         }
 
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . h($property['name_prop']) . '</div>
             ' . $place . '
             <div class="choice-grid checkbox_property ag_pole_good">' . $checkboxes . '</div>
         </div>';
     } elseif ($property['type_prop'] == '4') {
         $result = '<div class="property-field name_select_rielt" data-property="' . $idProp . '" data-property-id="' . $idProp . '">
-            <div class="field-label name">' . $property['name_prop'] . '</div>
+            <div class="field-label name">' . h($property['name_prop']) . '</div>
             ' . $place . '
             <input type="text" inputmode="decimal" class="text-input add-inp ag_pole_good" placeholder="Числовое значение">
         </div>';
@@ -64,7 +64,7 @@ function property($property)
     return $result;
 }
 
-$properties = db()->query('SELECT * FROM property_s ORDER BY sort_prop');
+$properties = db()->query("SELECT * FROM property_s WHERE cat_prop = '' ORDER BY sort_prop, id");
 ?>
 <section class="scenario-column app-window">
     <header class="app-window-bar">
